@@ -1,0 +1,796 @@
+---
+title: Data Analysis on Black Friday sales in a retail store using Machine Learning Models and Vector Support Techniques
+subtitle : "Data Science: Capstone Project for Harvardx Professional Data Science Certificate (Choose your own project: PH125.9x)"
+author: "Delpagodage Ama Nayanahari Jayaweera"
+date: "March 24, 2023"
+output: 
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+The purpose of this project is to apply advanced machine learning techniques and support vector machine techniques to a publicly available dataset [1] as part of the 'Data Science: Capstone' course (PH125.9x) offered by edX HarvardX. The project goes beyond traditional linear regression methods and focuses on exploring and analyzing the data using various machine learning algorithms. The goal is to gain insights from the analysis and effectively communicate the process and findings.
+
+## Introduction
+
+Black Friday is a major shopping event that takes place on the day after Thanksgiving Day in the United States. It is typically regarded as the beginning of the Christmas shopping season and is characterized by large discounts and promotions offered by retailers. Black Friday is considered one of the busiest shopping days of the year, with crowds of shoppers lining up outside stores in the early morning hours to take advantage of the deals. In recent years, the popularity of online shopping has led to the emergence of Cyber Monday, which takes place on the Monday after Black Friday and features online sales and discounts. Black Friday is now also observed in other parts of the world, including Canada, the United Kingdom, and Australia.
+
+## Project Description
+
+The objective of this project is to use machine learning models and vector support techniques to evaluate and predict the Black Friday sales volume with different option as Gender, Top Sellers, Age, City, Marital Status and occupation. Data transformation and feature engineering are included to improve the predictions and, as various modeling approaches are presented, Several modeling techniques will be explored and the most suitable one will be identified based on evaluation metrics such as Root Mean Square Error (RMSE).
+
+## Data Set
+
+The present project studies the Black Friday Dataset, available on the Kaggle [1] community website. This dataset consists of 12 different columns with 537,577 records, each representing following corresponding variables:
+
+1.  User_ID: Unique identifier of shopper.
+
+2.  Product_ID: Unique identifier of product. (No key given)
+
+3.  Gender: Sex of shopper.
+
+4.  Age: Age of shopper split into bins.
+
+5.  Occupation: Occupation of shopper. (No key given)
+
+6.  City_Category: Residence location of shopper. (No key given)
+
+7.  Stay_In_Current_City_Years: Number of years stay in current city.
+
+8.  Marital_Status: Marital status of shopper.
+
+9.  Product_Category_1: Product category of purchase.
+
+10. Product_Category_2: Product may belong to other category.
+
+11. Product_Category_3: Product may belong to other category.
+
+12. Purchase: Purchase amount in dollars.
+
+The upcoming section will include data exploration, visualization, transformation, and feature engineering on the referenced dataset.
+
+## Attribute Statistics
+
+Basic statistics about the data are obtained in the below:
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+dataset = read.csv("BlackFriday.csv")
+summary(dataset)
+
+head(dataset)
+```
+
+# Exploratory Data Analysis (EDA)
+
+Exploratory Data Analysis (EDA) is a crucial step in analyzing a dataset. It involves conducting preliminary investigations on the data to identify patterns, anomalies, and relationships, as well as testing hypotheses and verifying assumptions. This is typically achieved through the use of summary statistics and graphical representations. By performing EDA, analysts can gain a deeper understanding of the data and make informed decisions about how to proceed with subsequent analyses [2].
+
+Upon analyzing the dataset, it becomes clear that each row pertains to a unique transaction and the item purchased by a particular customer. This information is crucial when we group transactions by User_ID to calculate the total purchases made by each customer.
+
+## Gender
+
+To start analysis, will look at the gender distribution of shoppers in this store. However, since each row in the data represents a unique transaction, need to group the data by User_ID to eliminate any duplicates before can proceed with analysis.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(dplyr)
+library(scales)
+library(arules)
+library(gridExtra)
+
+dataset = read.csv("BlackFriday.csv")
+
+dataset_gender = dataset %>%
+  select(User_ID, Gender) %>%
+  group_by(User_ID) %>%
+  distinct()  
+
+head(dataset_gender)
+
+summary(dataset_gender$Gender)
+
+dataset_gender_summary <- dataset_gender %>%
+  group_by(Gender) %>%
+  summarize(n_users = n_distinct(User_ID))
+
+dataset_gender_summary
+```
+
+After created a dataframe that shows each User_ID along with their corresponding gender and transaction counts, we can proceed with visualizing the distribution of gender in our dataset. Follows is plot gender distribution to gain further insights.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+options(scipen=10000)   # To remove scientific numbering
+
+genderDist  = ggplot(data = dataset_gender) +
+  geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
+  labs(title = 'Gender of Customers') + 
+  scale_fill_brewer(palette = 'PuBuGn')
+print(genderDist)
+```
+
+The gender split data can be beneficial for retailers as it enables them to make adjustments to their store design, product offerings, and other factors based on the proportion of male and female shoppers.
+
+1.  Gender split on Black Friday at our store shows more male shoppers than female shoppers.
+
+2.  This information is useful for retailers as it can inform modifications to store layout, product selection, and other variables based on the gender proportion of their shoppers.
+
+To further explore this topic, we can calculate the mean spending amount based on gender. To make the data easier to interpret and analyze, we will create separate tables and then merge them. This will help us identify any differences in spending patterns between men and women, which can inform retailers on how to better cater to their target customers.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+total_purchase_user = dataset %>%
+                        select(User_ID, Gender, Purchase) %>%
+                        group_by(User_ID) %>%
+                        arrange(User_ID) %>%
+                        summarise(Total_Purchase = sum(Purchase))
+
+user_gender = dataset %>%
+                select(User_ID, Gender) %>%
+                group_by(User_ID) %>%
+                arrange(User_ID) %>%
+                distinct()
+                
+head(user_gender)
+head(total_purchase_user)
+
+
+user_purchase_gender = full_join(total_purchase_user, user_gender, by = "User_ID")
+head(user_purchase_gender)
+```
+
+Based on our analysis, it appears that the average transaction amount for females is 699054.00, while the average transaction amount for males is 911963.20. To better communicate our findings, we can create visualizations such as charts or graphs. This will allow us to present our results in a clear and concise manner, making it easier for stakeholders to understand the data and make informed decisions.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+average_spending_gender = user_purchase_gender %>%
+                            group_by(Gender) %>%
+                            summarize(Purchase = sum(as.numeric(Total_Purchase)), 
+                                      Count = n(), 
+                                      Average = Purchase/Count)
+head(average_spending_gender)
+
+
+genderAverage  = ggplot(data = average_spending_gender) +
+                    geom_bar(mapping = aes(x = Gender, y = Average, fill = Gender), stat = 'identity') +
+                    labs(title = 'Average Spending by Gender') +
+                    scale_fill_brewer(palette = 'PuBuGn')
+print(genderAverage)
+```
+
+Our analysis reveals an interesting trend: while female shoppers make fewer purchases than males at this particular store, their average spending amount is nearly equal to that of male shoppers. However, it is important to note that this observation must be considered in the context of scale, as females are still spending an average of approximately 250,000 less than males. Retailers should take this information into account when developing marketing strategies and product offerings that cater to their diverse customer base.
+
+## Top Seller
+
+Let's now shift our focus to the top-selling products. In this scenario, we won't group the data by product ID since we want to identify any duplicate purchases, in case customers are buying two or more quantities of the same product. This will give us a better understanding of which products are most popular among our customers and help us make informed decisions about inventory management and product promotion.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+top_sellers = dataset %>%
+                count(Product_ID, sort = TRUE)
+
+top_5 = head(top_sellers, 5)
+
+top_5
+```
+
+Based on our analysis, it appears that the top five best-selling products, ranked by product ID and corresponding quantity sold, are:
+
+1.  P00265242 = 1858
+
+2.  P00110742 = 1591
+
+3.  P00025442 = 1586
+
+4.  P00112142 = 1539
+
+5.  P00057642 = 1430
+
+Now that we have identified the top-selling products, let's take a closer look at the best-selling product, P00265242. This analysis can help us understand what makes this product so popular among our customers and help us identify opportunities to increase sales and revenue.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+best_seller = dataset[dataset$Product_ID == 'P00265242', ]
+
+head(best_seller)
+```
+
+Our analysis reveals that the best-selling product, P00265242, falls under Product_Category_1 = 5 and Product_Category_2 = 8. However, in order to determine the specific name of the product, we would need a key or reference guide.
+
+Another interesting observation is that customers are purchasing the same product at different prices. This could be due to various Black Friday promotions, discounts, or coupon codes. Alternatively, there may be other factors at play that are causing price discrepancies between customers, which would require further investigation.
+
+Now, let's examine whether any gender-related patterns exist in the sales of this best-selling product. This analysis can help us identify any differences in purchasing behavior between men and women and help us tailor our marketing strategies accordingly.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+genderDist_bs  = ggplot(data = best_seller) +
+                  geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
+                  labs(title = 'Gender of Customers (Best Seller)') +
+                  scale_fill_brewer(palette = 'PuBuGn')
+print(genderDist_bs)
+```
+
+We observe a comparable gender distribution in the subset of data as in the overall dataset. To verify this, let's perform a statistical test.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+genderDist_bs_prop = ggplot(data = best_seller) + 
+                          geom_bar(fill = 'lightblue', mapping = aes(x = Gender, y = ..prop.., group = 1, fill = Gender)) +
+                          labs(title = 'Gender of Customers (Best Seller - Proportion)') +
+                          theme(plot.title = element_text(size=9.5))
+
+genderDist_prop = ggplot(data = dataset_gender) + 
+                      geom_bar(fill = "lightblue4", mapping = aes(x = Gender, y = ..prop.., group = 1)) +
+                      labs(title = 'Gender of Customers (Total Proportion)') +
+                      theme(plot.title = element_text(size=9.5)) 
+
+grid.arrange(genderDist_prop, genderDist_bs_prop, ncol=2)
+```
+
+The gender distribution among purchasers of the bestseller and all products appears to be roughly 25% female and 75% male in the overall observation set. While a slight difference exists, it is reasonable to conclude that the bestseller does not target a specific gender.
+
+Next, let's shift our focus to analyzing the age variable.
+
+## Age
+
+We can start our analysis of age by generating a table that shows the number of individuals in each age bracket.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_age = dataset %>%
+                    select(User_ID, Age) %>%
+                    distinct() %>%
+                    count(Age)
+customers_age
+```
+
+Our dataset includes the counts of customers in each age group who visit our store. It would be beneficial to visualize this data in a graphical format.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_age_vis = ggplot(data = customers_age) + 
+                      geom_bar(color = 'black', stat = 'identity', mapping = aes(x = Age, y = n, fill = Age)) +
+                      labs(title = 'Age of Customers') +
+                      theme(axis.text.x = element_text(size = 10)) +
+                      scale_fill_brewer(palette = 'Blues') +
+                      theme(legend.position="none")
+print(customers_age_vis)
+```
+
+Another chart that we could create is one that illustrates the age distribution of our "best seller" category. This would enable us to identify whether there is a particular age group that has a higher tendency to purchase our best-selling product compared to other shoppers.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+ageDist_bs  = ggplot(data = best_seller) +
+                  geom_bar(color = 'black', mapping = aes(x = Age, y = ..count.., fill = Age)) +
+                  labs(title = 'Age of Customers (Best Seller)') +
+                  theme(axis.text.x = element_text(size = 10)) +
+                  scale_fill_brewer(palette = 'GnBu') + 
+                  theme(legend.position="none")
+print(ageDist_bs)
+```
+
+Based on our observations, it appears that individuals in the age groups of 18-25 and 26-35 have made the highest number of purchases of our best-selling product. We should now compare this finding with the data from the overall dataset to determine if this trend holds true across all purchases.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+grid.arrange(customers_age_vis, ageDist_bs, ncol=2)
+```
+
+Upon comparing the proportion of customers by age between the best-selling product and the overall dataset, we can observe some variation. Specifically, it seems that customers who are aged 45 and above purchase the top-selling product slightly less frequently than other products in the overall dataset.
+
+Having analyzed the variable of age, we can now shift our focus to another variable.
+
+## City
+
+Let's create a table that shows each User_ID and their respective City_Category.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_location =  dataset %>%
+                            select(User_ID, City_Category) %>%
+                            distinct()
+head(customers_location)
+
+customers_location_vis = ggplot(data = customers_location) +
+                          geom_bar(color = 'white', mapping = aes(x = City_Category, y = ..count.., fill = City_Category)) +
+                          labs(title = 'Location of Customers') + 
+                          scale_fill_brewer(palette = "Dark2") + 
+                          theme(legend.position="none")
+print(customers_location_vis)
+```
+
+After analyzing the data, it's evident that the majority of our customers reside in City C. Next, we can calculate the total purchase amount made by customers in each city to determine which city's customers have spent the highest amount at our store.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+purchases_city = dataset %>%
+                  group_by(City_Category) %>%
+                  summarise(Purchases = sum(Purchase))
+
+purchases_city_1000s = purchases_city %>%
+                          mutate(purchasesThousands = purchases_city$Purchases / 1000)
+
+purchases_city_1000s
+```
+
+To make the numbers more manageable, we divided the Purchases column by 1000. This is a common practice in the business and accounting world, as it simplifies large numbers and makes them easier to read and plot on charts.
+
+With our table in place, it's time to create a visual representation of our findings.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+purchaseCity_vis = ggplot(data = purchases_city_1000s, aes(x = City_Category, y = purchasesThousands, fill = City_Category)) +
+                      geom_bar(color = 'white', stat = 'identity') +
+                      labs(title = 'Total Customer Purchase Amount (by City)', y = '($000s)', x = 'City Category') +
+                      scale_fill_brewer(palette = "Dark2") + 
+                      theme(legend.position="none", plot.title = element_text(size = 9))
+print(purchaseCity_vis)
+```
+
+To make the numbers more manageable, we divided the Purchases column by 1000. This is a common practice in the business and accounting world, as it simplifies large numbers and makes them easier to read and plot on charts.
+
+With our table in place, it's time to create a visual representation of our findings.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+grid.arrange(customers_location_vis, purchaseCity_vis, ncol=2)
+```
+
+From the chart, it's clear that City C had the most number of customers who shopped at our store on Black Friday. However, customers from City B had the highest total purchase amount.
+
+To gain a deeper understanding of this observation, we need to conduct further analysis. Our next step is to determine the number of purchases made by customers in each city. To do so, we will first need to calculate the total number of purchases for each User_ID in the dataset.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers = dataset %>%
+              group_by(User_ID) %>%
+              count(User_ID)
+head(customers)
+```
+
+This calculation gives us the total number of purchases made by each individual user. To further investigate this, we should also calculate the total purchase amount made by each user. Once we have this information, we can join it with the other table to gain a more complete understanding of our findings.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_City =  dataset %>%
+                    select(User_ID, City_Category) %>%
+                    group_by(User_ID) %>%
+                    distinct() %>%
+                    ungroup() %>%
+                    left_join(customers, customers_City, by = 'User_ID') 
+head(customers_City)
+
+city_purchases_count = customers_City %>%
+                        select(City_Category, n) %>%
+                        group_by(City_Category) %>%
+                        summarise(CountOfPurchases = sum(n))
+city_purchases_count
+
+
+city_count_purchases_vis = ggplot(data = city_purchases_count, aes(x = City_Category, y = CountOfPurchases, fill = City_Category)) +
+                              geom_bar(color = 'white', stat = 'identity') +
+                              labs(title = 'Total Purchase Count (by City)', y = 'Count', x = 'City Category') +
+                              scale_fill_brewer(palette = "Dark2") +
+                              theme(legend.position="none", plot.title = element_text(size = 9))
+print(city_count_purchases_vis)
+
+grid.arrange(purchaseCity_vis, city_count_purchases_vis, ncol = 2)
+```
+
+Based on these charts, it seems that customers from City B are not necessarily buying more expensive products than those from City A and City C. Instead, they are simply making more purchases in general. This inference is supported by the fact that the "Total Count of Purchases" chart has a similar shape to the "Total Customer Purchase Amount" chart. If the opposite were true, we would expect to see a lower count of total purchases for customers from City B, accompanied by a higher total purchase amount.
+
+Given this observation, let's now turn our attention to the distribution of our best-selling product (P00265242) within each City_Category.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+head(best_seller)
+
+best_seller_city = best_seller %>%
+                    select(User_ID, City_Category) %>%
+                    distinct() %>%
+                    count(City_Category)
+best_seller_city
+
+
+
+
+
+best_seller_city_vis = ggplot(data = best_seller_city, aes(x = City_Category, y = n, fill = City_Category)) +
+                              geom_bar(color = 'white', stat = 'identity') +
+                              labs(title = 'Best Seller Purchase Count (by City)', y = 'Count', x = 'City Category') +
+                              scale_fill_brewer(palette = "Blues") +
+                              theme(legend.position="none", plot.title = element_text(size = 9))
+grid.arrange(city_count_purchases_vis,best_seller_city_vis, ncol = 2)
+```
+
+While customers in City C purchase more of our "best seller" product than those in City A and City B, the overall number of purchases made by City C residents is lower than that of City B.
+
+## Stay in Current City
+
+Next, we will investigate the distribution of customers based on the length of time they have lived in their respective cities.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_stay = dataset %>%
+                    select(User_ID, City_Category, Stay_In_Current_City_Years) %>%
+                    group_by(User_ID) %>%
+                    distinct()
+head(customers_stay)
+```
+
+let's begin by plotting the distribution of our customers across the different cities.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+residence = customers_stay %>%
+                group_by(City_Category) %>%
+                tally()
+head(residence)
+```
+
+Based on the chart, it appears that a large proportion of our customer base resides in City C. Let's dive deeper into this trend and explore it further.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_stay_vis = ggplot(data = customers_stay, aes(x = Stay_In_Current_City_Years, y = ..count.., fill = Stay_In_Current_City_Years)) +
+                              geom_bar(stat = 'count') +
+                              scale_fill_brewer(palette = 15) +
+                              labs(title = 'Customers Stay in Current City', y = 'Count', x = 'Stay in Current City', fill = 'Number of Years in Current City')
+print(customers_stay_vis)
+```
+
+let's create a stacked bar chart to visualize the distribution of customers based on their length of residence in their respective cities, segmented by City_Category.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+stay_cities = customers_stay %>%
+                group_by(City_Category, Stay_In_Current_City_Years) %>%
+                tally() %>%
+                mutate(Percentage = (n/sum(n))*100)
+head(stay_cities)
+
+
+
+
+
+
+
+ggplot(data = stay_cities, aes(x = City_Category, y = n, fill = Stay_In_Current_City_Years)) + 
+    geom_bar(stat = "identity", color = 'white') + 
+    scale_fill_brewer(palette = 2) + 
+    labs(title = "City Category + Stay in Current City", 
+            y = "Total Count (Years)", 
+            x = "City", 
+            fill = "Stay Years")
+```
+
+Based on the stacked bar chart, it appears that the majority of our customers across all City_Categories have only been living in their respective cities for 1 year. It would be interesting to further investigate the reasons for this trend and see if there are any patterns or factors contributing to it.
+
+## Purchase
+
+Let's calculate the total purchase amount for each user in the dataset. This will give us an idea of the most valuable customers for our store.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_total_purchase_amount = dataset %>%
+                                    group_by(User_ID) %>%
+                                    summarise(Purchase_Amount = sum(Purchase))
+
+head(customers_total_purchase_amount)
+```
+
+now we can sort the total purchase amounts by user ID in descending order to find our top spenders. This will help us identify the customers who make the most purchases and contribute the most to our store's revenue.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_total_purchase_amount = arrange(customers_total_purchase_amount, desc((Purchase_Amount)))
+
+head(customers_total_purchase_amount)
+```
+
+Based on our analysis, we have identified User ID 1004277 as the top spender at our store. In order to gain more insights into our customer spending data, we will use the summary() function to see other important characteristics such as the mean, median, and quartiles of our total purchase amount data. This will give us a better understanding of the typical spending behavior of our customers, as well as any outliers or extreme values in our data set.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+summary(customers_total_purchase_amount)
+```
+
+We have computed the total purchase amount by User ID and found that User ID 1004277 is our top spender. By using the summary() function on the total customer spending data, we can see that the average total purchase amount is 851752, with a maximum total purchase amount of 10536783 and a minimum total purchase amount of 44108. The median purchase amount is 512612.
+
+To better understand the distribution of purchase amounts, we will plot a density chart. This will allow us to see where the highest concentration of similar purchase amounts lies within the entire customer base. It is important to note that density charts represent the expected probability of values given the input data, and plot a line surrounding those values to estimate the distribution.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+ggplot(customers_total_purchase_amount, aes(Purchase_Amount)) +
+  geom_density(adjust = 1) +
+  geom_vline(aes(xintercept=median(Purchase_Amount)),
+             color="blue", linetype="dashed", size=1) +
+  geom_vline(aes(xintercept=mean(Purchase_Amount)),
+             color="red", linetype="dashed", size=1) +
+  geom_text(aes(x=mean(Purchase_Amount), label=round(mean(Purchase_Amount)), y=1.2e-06), color = 'red', angle=360,
+            size=4, vjust=3, hjust=-.1) +
+  geom_text(aes(x=median(Purchase_Amount), label=round(median(Purchase_Amount)), y=1.2e-06), color = 'blue', angle=360,
+            size=4, vjust=0, hjust=-.1) +
+  scale_x_continuous(name="Purchase Amount", limits=c(0, 7500000), breaks = seq(0,7500000, by = 1000000), expand = c(0,0)) +
+  scale_y_continuous(name="Density", limits=c(0, .00000125), labels = scientific, expand = c(0,0))
+```
+
+This density plot of purchase amounts shows that the distribution is right-skewed, with a long tail towards the right. This indicates that there are a significant number of purchases with higher values than the mean, and that the distribution of purchases is not normally distributed. The highest density of values appears to be around the 250000 mark, with a steep drop-off in density for values above this point. Overall, this suggests that there are a significant number of high-value purchases made by our customers, which may be worth investigating further.
+
+## Marital Status
+
+Lets now examine the marital status of store customers.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+dataset_maritalStatus = dataset %>%
+                            select(User_ID, Marital_Status) %>%
+                            group_by(User_ID) %>%
+                            distinct()
+                    
+head(dataset_maritalStatus)
+```
+
+Note, we need to quickly change Marital_Status from a numeric variable to a categorical type.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+dataset_maritalStatus$Marital_Status = as.character(dataset_maritalStatus$Marital_Status)
+typeof(dataset_maritalStatus$Marital_Status)
+```
+
+It's important to note that we don't have a clear guide for the marital status variable in the dataset. While in some cases it would be best to contact the data provider for clarification, in this case we can make the assumption that the values of 1 represent "married" and the values of 0 represent "single". To make further analysis easier, we will convert the variable from numeric to categorical.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+marital_vis = ggplot(data = dataset_maritalStatus) +
+                    geom_bar(mapping = aes(x = Marital_Status, y = ..count.., fill = Marital_Status)) +
+                    labs(title = 'Marital Status') +
+                    scale_fill_brewer(palette = 'Pastel2')
+print(marital_vis)
+```
+
+Let's create a stacked bar chart of Marital_Status in each City_Category to see if there are any differences.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+dataset_maritalStatus = dataset_maritalStatus %>%
+                            full_join(customers_stay, by = 'User_ID') 
+head(dataset_maritalStatus)
+
+maritalStatus_cities = dataset_maritalStatus %>%
+                        group_by(City_Category, Marital_Status) %>%
+                        tally()
+head(maritalStatus_cities)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+ggplot(data = maritalStatus_cities, aes(x = City_Category, y = n, fill = Marital_Status)) + 
+    geom_bar(stat = "identity", color = 'black') + 
+    scale_fill_brewer(palette = 2) + 
+    labs(title = "City + Marital Status", 
+            y = "Total Count (Shoppers)", 
+            x = "City", 
+            fill = "Marital Status")
+```
+
+let's investigate the Stay_in_Current_City distribution within each City_Category.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+Users_Age = dataset %>%
+                select(User_ID, Age) %>%
+                distinct()
+head(Users_Age)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+dataset_maritalStatus = dataset_maritalStatus %>%
+                            full_join(Users_Age, by = 'User_ID')
+head(dataset_maritalStatus)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+City_A = dataset_maritalStatus %>%
+            filter(City_Category == 'A')
+City_B = dataset_maritalStatus %>%
+            filter(City_Category == 'B')
+City_C = dataset_maritalStatus %>%
+            filter(City_Category == 'C')
+head(City_A)
+head(City_B)
+head(City_C)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+City_A_stay_vis = ggplot(data = City_A, aes(x = Age, y = ..count.., fill = Age)) + 
+                              geom_bar(stat = 'count') +
+                              scale_fill_brewer(palette = 8) +
+                              theme(legend.position="none", axis.text = element_text(size = 6)) +
+                              labs(title = 'City A', y = 'Count', x = 'Age', fill = 'Age')
+City_B_stay_vis = ggplot(data = City_B, aes(x = Age, y = ..count.., fill = Age)) +
+                              geom_bar(stat = 'count') +
+                              scale_fill_brewer(palette = 9) +
+                              theme(legend.position="none", axis.text = element_text(size = 6)) +
+                              labs(title = 'City B', y = 'Count', x = 'Age', fill = 'Age')
+City_C_stay_vis = ggplot(data = City_C, aes(x = Age, y = ..count.., fill = Age)) +
+                              geom_bar(stat = 'count') +
+                              scale_fill_brewer(palette = 11) +
+                              theme(legend.position="none", axis.text = element_text(size = 6)) +
+                              labs(title = 'City C', y = 'Count', x = 'Age', fill = 'Age')
+
+grid.arrange(City_A_stay_vis, City_B_stay_vis, City_C_stay_vis, ncol = 3)
+```
+
+Another factor that could contribute to the difference in Marital_Status between cities could be cultural and socioeconomic differences. It would be interesting to further investigate these factors to understand the underlying reasons for the observed patterns.
+
+## Top Shoppers
+
+Now, we will investigate who our top shoppers were on Black Friday.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+top_shoppers = dataset %>%
+                count(User_ID, sort = TRUE)
+
+head(top_shoppers)
+```
+
+According to our analysis, User_ID 1001680 appears to be the most frequent shopper in our master ledger of shopper data. It seems that this user has made over 1000 individual transactions based on the data. To gain more insights, we can combine this top shoppers dataset with our total customer purchases dataset, allowing us to see the shopping behavior and purchase patterns of the top spenders in more detail.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+top_shoppers =  top_shoppers %>%
+                    select(User_ID, n) %>%
+                    left_join(customers_total_purchase_amount, Purchase_Amount, by = 'User_ID')
+
+head(top_shoppers)
+```
+
+After merging our top shoppers dataset with the total customer purchases dataset, we can observe that User_ID 1001680 has made the most number of purchases, with over 1000 transactions recorded. However, our previous analysis showed that User_ID 1004277 has the highest total Purchase_Amount. Moreover, we can also compute the average Purchase_Amount for each user using this merged dataset.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+top_shoppers = mutate(top_shoppers,
+                  Average_Purchase_Amount = Purchase_Amount/n)
+
+head(top_shoppers)
+```
+
+Let's sort the data based on the Average_Purchase_Amount column to identify which customers are spending the most on average. This will allow us to gain insights into which customers are the most valuable to the business in terms of their spending habits.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+top_shoppers_averagePurchase = top_shoppers %>%
+                                    arrange(desc(Average_Purchase_Amount))
+
+head(top_shoppers_averagePurchase)
+
+```
+
+It seems that User_ID 1005069 is the customer with the highest average purchase amount, with a total purchase amount of 308454. On the other hand, User_ID 1003902 is the second-highest in average purchase amount, but with a much higher total purchase amount of 1746284.
+
+## Occupation
+
+The last thing we will analyze is the occupation of customers in our dataset.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+customers_Occupation =  dataset %>%
+                          select(User_ID, Occupation) %>%
+                          group_by(User_ID) %>%
+                          distinct() %>%
+                          left_join(customers_total_purchase_amount, Occupation, by = 'User_ID')
+
+head(customers_Occupation)
+```
+
+Now that we have our required dataset, we can aggregate the total Purchase_Amount for each Occupation identifier. Then, we will convert the Occupation column to a character data type.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+totalPurchases_Occupation = customers_Occupation %>%
+                              group_by(Occupation) %>%
+                              summarise(Purchase_Amount = sum(Purchase_Amount)) %>%
+                              arrange(desc(Purchase_Amount))
+
+totalPurchases_Occupation$Occupation = as.character(totalPurchases_Occupation$Occupation)
+typeof(totalPurchases_Occupation$Occupation)
+
+head(totalPurchases_Occupation)
+```
+
+Now, lets plot each occupation and their total Purchase_Amount
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+occupation = ggplot(data = totalPurchases_Occupation) +
+                  geom_bar(mapping = aes(x = reorder(Occupation, -Purchase_Amount), y = Purchase_Amount, fill = Occupation), stat = 'identity') +
+                  scale_x_discrete(name="Occupation", breaks = seq(0,20, by = 1), expand = c(0,0)) +
+                  scale_y_continuous(name="Purchase Amount ($)", expand = c(0,0), limits = c(0, 750000000)) +
+                  labs(title = 'Total Purchase Amount by Occupation') + 
+                  theme(legend.position="none")
+print(occupation)
+```
+
+By grouping total purchase amount by occupation, we can see that customers with Occupation 4 spent the most during Black Friday. Customers with Occupation 0 and 7 also spent significantly high amounts. If we had access to the key for the occupations, we could use this information to classify our shoppers and create targeted marketing campaigns based on their spending behavior.
+
+# Methods and Analysis
+
+## Apriori (Association Rule Learning)
+
+Let's explore the use of the Apriori algorithm, which is a machine learning technique used to make association rules related to customer purchases. We will be utilizing the arules package to perform this analysis.
+
+The fundamental concept behind Association Rule Learning is to predict customer transactions based on their prior purchases. It aims to answer the question "People who bought ------ also bought ------". This approach can be immensely valuable for retailers who want to optimize their product placement strategy in stores and promotional campaigns.
+
+In the context of our Black Friday store, implementing an effective product placement strategy can maximize the sales of related products that are often purchased together. For instance, if our store is offering a discount on TVs, it would be wise to place HDMI cables next to them, as these items are frequently purchased together. However, placing these items far apart may also be beneficial as it would require customers to navigate the entire store, increasing the likelihood of them noticing and purchasing other products along the way.
+
+The Apriori algorithm is particularly adept at maximizing the likelihood of customers performing, purchasing, or watching something based on their prior actions.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(arules)
+library(arulesViz)
+library(tidyverse)
+
+# Data Preprocessing
+# Getting the dataset into the correct format
+customers_products = dataset %>%
+                        select(User_ID, Product_ID) %>%   # Selecting the columns we will need
+                        group_by(User_ID) %>%             # Grouping by "User_ID"          
+                        arrange(User_ID) %>%              # Arranging by "User_ID" 
+                        mutate(id = row_number()) %>%     # Defining a key column for each "Product_ID" and its corresponding "User_ID" (Must do this for spread() to work properly)
+                        spread(User_ID, Product_ID) %>%   # Converting our dataset from tall to wide format, and grouping "Product_IDs" to their corresponding "User_ID"
+                        t()                               # Transposing the dataset from columns of "User_ID" to rows of "User_ID"
+
+# Now we can remove the Id row we created earlier for spread() to work correctly.
+customers_products = customers_products[-1,]
+
+
+write.csv(customers_products, file = 'customers_products.csv')
+
+customersProducts = read.transactions('customers_products.csv', sep = ',', rm.duplicates = TRUE) # remove duplicates with rm.duplicates
+
+
+summary(customersProducts)
+
+
+
+
+itemFrequencyPlot(customersProducts, topN = 25)    # topN is limiting to the top 50 products
+
+rules = apriori(data = customersProducts,
+               parameter = list(support = 0.008, confidence = 0.80, maxtime = 0)) # maxtime = 0 will allow our algorithim to run until completion with no time limit
+
+inspect(sort(rules, by = 'lift'))
+
+
+plot(rules, method = 'graph')
+
+
+rules = apriori(data = customersProducts,
+               parameter = list(support = 0.008, confidence = 0.75, maxtime = 0))
+
+
+inspect(head(sort(rules, by = 'lift'))) # limiting to the top 6 rules
+
+plot(rules, method = 'graph', max = 25)
+
+plot(rules, method = 'grouped', max = 25)
+```
+
+We can observe that the sparse matrix has dimensions of 5892 by 10539, indicating 5892 rows (also referred to as elements, itemsets, or transactions) and 10539 columns (items). By using the summary function, we are able to obtain a density of 0.008768598, which implies that our matrix contains 0.9% non-zero values (1) and 99.1% zero (0) values.
+
+Furthermore, our Exploratory Data Analysis has revealed that the summary() function provides us with the most frequently purchased items by customers. To confirm our findings, we can cross-check this data with what we previously discovered. The resulting output from our sparse matrix is as follows:
+
+1.  P00265242 = 1858
+
+2.  P00110742 = 1591
+
+3.  P00025442 = 1586
+
+4.  P00112142 = 1539
+
+5.  P00057642 = 1430
+
+6.  (Other) = 53648
+
+Based on the above data, it appears that our top 5 best-selling products (identified by product ID) are as follows:
+
+1.  P00265242 = 1858
+
+2.  P00110742 = 1591
+
+3.  P00025442 = 1586
+
+4.  P00112142 = 1539
+
+5.  P00057642 = 1430
+
+The distribution of the number of items in a customer's basket, also known as the "element length distribution," provides us with valuable information. The distribution reveals the number of items purchased by customers, and we can also view additional information such as quartiles and mean values. In this instance, the mean value is 92.41, indicating that customers, on average, purchased 92.41 items. However, since some customers purchased over 1000 items, the mean value may be skewed. Therefore, it may be more appropriate to use the median value of 54.00 items, which is less influenced by outlier values.
+
+To gain a better understanding of the items, we can create an item frequency plot using the arules package.
+
+This visualization shows the association rules generated by the Apriori algorithm. The top section of the visualization displays the LHS (left-hand side) of the rules and the right-hand side section shows the corresponding RHS (right-hand side). The size of the bubbles in the visualization represents the support value of the rule, which indicates the frequency of occurrence of the rule in the dataset. The fill/color of the bubbles represents the lift value, which measures the strength of the association between the LHS and RHS. A higher lift value indicates a stronger association between the items in the LHS and RHS.
+
+# Conclusion
+
+Our exploration of the Black Friday dataset yielded many valuable insights. We were able to gain an understanding of how our customers are classified based on demographic information like gender, age, occupation, and residency. Additionally, we identified the top customers in terms of purchasing activity, and determined which products were the most and least popular during the Black Friday sale. In terms of overall purchase metrics, we analyzed the average amount spent by customers and the total amount spent across various categories.
+
+After completing our EDA, we delved into Association Rule Learning and discovered several rules that could be useful for our store. These rules indicate that customers who purchase certain items are highly likely to purchase another item as well, based on the patterns we observed in the data. These insights can be invaluable in understanding customer behavior and making strategic business decisions.
+
+# Reference
+
+1.  <https://www.kaggle.com/code/dessinhaprado/black-friday/input>
+
+2.  <https://towardsdatascience.com/exploratory-data-analysis-8fc1cb20fd15>
+
+3.  <https://en.wikipedia.org/wiki/Apriori_algorithm>
