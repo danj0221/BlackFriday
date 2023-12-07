@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Overview
 
-The purpose of this project is to apply advanced machine learning techniques to a publicly available dataset [1] as part of the 'Data Science: Capstone' course (PH125.9x)offered by edX HarvardX.
+The purpose of this project is to apply advanced machine learning techniques to a publicly available dataset as part of the 'Data Science: Capstone' course (PH125.9x)offered by edX HarvardX.
 
 The project goes beyond focuses on exploring and analyzing the data using machine learning algorithms.The goal is to gain insights from the analysis and effectively communicate the process and findings.
 
@@ -116,6 +116,38 @@ dataset = read.csv("BlackFriday.csv")
 Next, proceed to import the essential libraries that shall constitute the backbone of analytical framework within this kernel.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
+if (!require(tidyverse)) {
+  install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(scales)) {
+  install.packages("scales", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(arules)) {
+  install.packages("arules", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(gridExtra)) {
+  install.packages("gridExtra", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(purrr)) {
+  install.packages("purrr", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(readr)) {
+  install.packages("readr", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(tidyr)) {
+  install.packages("tidyr", repos = "http://cran.us.r-project.org")
+}
+
+if (!require(dplyr)) {
+  install.packages("dplyr", repos = "http://cran.us.r-project.org")
+}
+
 library(tidyverse)
 library(scales)
 library(arules)
@@ -127,8 +159,7 @@ library(dplyr)
 ```
 
 For the purpose of visualizing and delving into dataset, harness the capabilities of the "tidyverse" package.This package is renowned for its user-friendly syntax and an extensive array of valuable functions.
-To further enhance the visual representation of plots, also enlist the "scales" package, facilitating tailored adjustments to plot axes.
-In the culminating phase of this kernel, the "arules" package will come to the fore, playing an integral role in Association Rule Learning and the Apriori algorithm.
+To further enhance the visual representation of plots, also enlist the "scales" package, facilitating tailored adjustments to plot axes.In the culminating phase of this kernel, the "arules" package will come to the fore, playing an integral role in Association Rule Learning and the Apriori algorithm.
 
 Comprehensive information pertaining to all the packages integrated into this EDA can be found in the Works Cited section of this kernel.Now, let us embark upon journey with an initial high-level overview of the entirety of the dataset.
 
@@ -198,8 +229,7 @@ Citing a research study from the Clothing and Textiles Research Journal, it is r
 The study further suggests the mediating role of hedonic shopping value in shopping satisfaction, a correlation confirmed among female subjects, yet not among male respondents (Chang, E., Burns, L. D., & Francis, S. K., 2004).
 While this may not yield immediate prescriptive insights for retail establishments, it underscores a gender-based disparity in the derived value of shopping and its nexus with gender, serving as a compelling consideration for retailers.
 
-To delve deeper into analysis, let us proceed to compute the average spending amount in relation to gender.
-To facilitate interpretability and traceability, construct distinct tables before ultimately merging them for a holistic perspective.
+To delve deeper into analysis, let us proceed to compute the average spending amount in relation to gender.To facilitate interpretability and traceability, construct distinct tables before ultimately merging them for a holistic perspective.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 total_purchase_user = dataset %>%
@@ -244,10 +274,7 @@ genderAverage  = ggplot(data = average_spending_gender) +
 print(genderAverage)
 ```
 
-A compelling observation comes to light through visualization.Despite the relative disparity in the frequency of purchases between female and male shoppers within this particular store, the average transaction amount for females is remarkably close to that of their male counterparts.
-It is imperative to exercise caution in interpreting these results, recognizing the need to consider the scale of these expenditures.
-While females are nearly matching the average spending of males, it's important to underscore that, on average, their expenditures are still approximately250,000 units lower than those of males.
-This insight underscores the significance of contextualizing the data within a broader framework.
+A compelling observation comes to light through visualization.Despite the relative disparity in the frequency of purchases between female and male shoppers within this particular store, the average transaction amount for females is remarkably close to that of their male counterparts. It is imperative to exercise caution in interpreting these results, recognizing the need to consider the scale of these expenditures.While females are nearly matching the average spending of males, it's important to underscore that, on average, their expenditures are still approximately 250,000 units lower than those of males. This insight underscores the significance of contextualizing the data within a broader framework.
 
 ### Top Sellers
 
@@ -289,6 +316,7 @@ As highlighted earlier, the absence of an explicit key detailing item names pose
 An intriguing revelation surfaces as observe variations in the purchase prices of the same product across different customers.
 
 This phenomenon could potentially be attributed to an array of factors, encompassing "Black Friday" promotions, discounts, or the utilization of distinct coupon codes.
+
 Alternatively, a deeper investigation may be warranted to unearth the underlying rationale for the disparities in purchase prices of an identical product among diverse customers.
 
 ### Correlation between Gender and the Best Selling Product
@@ -314,8 +342,7 @@ genderDist_bs  = ggplot(data = best_seller) +
 print(genderDist_bs)
 ```
 
-Upon a comprehensive review of the aggregate dataset, it is apparent that both the purchasers of the best-selling product and the purchasers of all products collectively exhibit a relatively balanced gender distribution, with approximately 25% representing females and 75% representing males.
-Although a subtle disparity is discernible, the overarching inference suggests that best-selling product does not distinctly cater to a particular gender demographic.Transitioning to the examination of the Age variable, analytically trajectory proceeds.A similar distribution between genders to overall dataset gender split - lets confirm.
+Upon a comprehensive review of the aggregate dataset, it is apparent that both the purchasers of the best-selling product and the purchasers of all products collectively exhibit a relatively balanced gender distribution, with approximately 25% representing females and 75% representing males. Although a subtle disparity is discernible, the overarching inference suggests that best-selling product does not distinctly cater to a particular gender demographic.Transitioning to the examination of the Age variable, analytically trajectory proceeds.A similar distribution between genders to overall dataset gender split - lets confirm.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 genderDist_bs_prop = ggplot(data = best_seller) + 
@@ -376,20 +403,18 @@ print(ageDist_bs)
 
 The visual analysis highlights that customers in the age groups of 18-25 and 26-35 constitute the majority of purchasers for the best-selling product.
 A comparison between the age distribution of the best-selling product and the overall dataset reveals some deviations.
+
 Particularly, customers aged over 45 appear to be slightly less inclined to purchase the top-selling product compared to other products in the dataset.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 grid.arrange(customers_age_vis, ageDist_bs, ncol=2)
 ```
 
-This in-depth exploration of age provides valuable insights into the purchasing behavior of different age groups.
-As shift focus to another variable, quest for comprehensive analysis continues.
+This in-depth exploration of age provides valuable insights into the purchasing behavior of different age groups. As shift focus to another variable, quest for comprehensive analysis continues.
 
 ### City
 
-Certainly, can proceed by constructing a table that presents each User_ID alongside its corresponding City_Category.
-
-This will serve as a foundation step for  subsequentanalytical exploration, which will delve into the distribution of shoppers across different city categories.
+Certainly, can proceed by constructing a table that presents each User_ID alongside its corresponding City_Category. This will serve as a foundation step for  subsequentanalytical exploration, which will delve into the distribution of shoppers across different city categories.
 
 To achieve this, employ the following code:
 
@@ -414,9 +439,7 @@ print(customers_location_vis)
 
 Observation unveils that the majority of customers are residents of City C. Building upon this insight, proceed to calculate the total purchase amount attributed to each city category.
 
-This subsequent analysis aims to shed light on which city's customers have made the most substantial expenditures at store.
-
-To initiate this computation, can employ the following code:
+This subsequent analysis aims to shed light on which city's customers have made the most substantial expenditures at store. To initiate this computation, can employ the following code:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 purchases_city = dataset %>%
@@ -580,9 +603,7 @@ customers_stay_vis = ggplot(data = customers_stay,
 print(customers_stay_vis)
 ```
 
-Certainly, a stacked bar chart can provide a clearer visualization of the distribution of customers based on their length of residency within their respective cities, categorized by City_Category.
-
-This chart will aid in uncovering any variations in residency patterns across different city categories. Create this stacked bar chart using the following code:
+Certainly, a stacked bar chart can provide a clearer visualization of the distribution of customers based on their length of residency within their respective cities, categorized by City_Category. This chart will aid in uncovering any variations in residency patterns across different city categories. Create this stacked bar chart using the following code:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 stay_cities = customers_stay %>%
@@ -618,8 +639,7 @@ ggplot(data = stay_cities, aes(x = City_Category, y = n,
 Indeed, observation is accurate and insightful. The stacked bar chart effectively illustrates the distribution of the total customer base across various city categories, segmented by the duration of their residency.
 A consistent trend emerges across all City_Category segments, where the most prevalent duration of residence for customers is one year.
 
-This commonality in the predominant residency duration across different city categories highlights the potential influence of this temporal aspect on shopping behaviors.
-The analysis offers valuable insights into how customer behaviors might correlate with the length of time they have resided in their current cities.
+This commonality in the predominant residency duration across different city categories highlights the potential influence of this temporal aspect on shopping behaviors. The analysis offers valuable insights into how customer behaviors might correlate with the length of time they have resided in their current cities.
 
 As a delve into another aspect of analysis, journey of exploration continues to unravel intricate patterns within the dataset.
 
@@ -674,16 +694,13 @@ ggplot(customers_total_purchase_amount, aes(Purchase_Amount)) +
 
 ### Interpretation of the density plot
 
-Interpretation of the density plot is accurate. The observed right (positive) skewness and the extended tail signify that a substantial number of purchase amounts lie higher than the mean.
-Additionally, the distribution doesn't align with a standard normal distribution.
+Interpretation of the density plot is accurate. The observed right (positive) skewness and the extended tail signify that a substantial number of purchase amounts lie higher than the mean. Additionally, the distribution doesn't align with a standard normal distribution.
 
 The peak density around the 250,000 mark indicates that the highest concentration of purchases occurs within this range.This insight corroborates the notion that a significant proportion of customers are making purchases around this amount.
 
 Understanding the distribution of purchase amounts is crucial for retailers in tailoring their marketing strategies, discounts, and promotionsto effectively engage with their customer base.
 
-This detailed analysis of purchase amounts provides valuable insights into customer spending behavior, further enhancing understanding of the dataset's dynamics.
-
-As continue to explore various facets of the data, journey of analysis unfolds, potentially revealing more intricate patterns and trends.
+This detailed analysis of purchase amounts provides valuable insights into customer spending behavior, further enhancing understanding of the dataset's dynamics.As continue to explore various facets of the data, journey of analysis unfolds, potentially revealing more intricate patterns and trends.
 
 ### Marital Status
 
@@ -811,8 +828,7 @@ grid.arrange(City_A_stay_vis, City_B_stay_vis, City_C_stay_vis, ncol = 3)
 
 Observation regarding the distribution of shoppers over the age of 45 in City A compared to other cities is astute. Indeed, demographic factors such as age distribution can influence various aspects of customer behaviors, including marital status and residency durations.
 
-The interplay between age distribution, marital status, and residency durations can lead to nuanced patterns in each city category.
-As a mentioned, these factors can collectively shape the resulting levels of marital status within individual cities. This holistic understanding is crucial for retailers and marketers to tailor their strategies and offerings to effectively engage with specific customer segments.
+The interplay between age distribution, marital status, and residency durations can lead to nuanced patterns in each city category. As a mentioned, these factors can collectively shape the resulting levels of marital status within individual cities. This holistic understanding is crucial for retailers and marketers to tailor their strategies and offerings to effectively engage with specific customer segments.
 
 By piecing together various variables and their relationships, effectively unraveling the complexity of customer behaviors within different city categories. As a delve further into the dataset, gaining deeper insights into the dynamics of customer interactions with the store.Analysis showcases the power of data exploration in uncovering hidden trends and patterns.
 
@@ -827,9 +843,7 @@ top_shoppers = dataset %>%
 head(top_shoppers)
 ```
 
-Absolutely, joining the dataset containing information about the top shoppers (User_ID 1001680 in this case) with the dataset that includes total purchase amounts can provide a comprehensive view of their shopping behavior and expenditure patterns.
-
-Perform this joining process using the following code:
+Absolutely, joining the dataset containing information about the top shoppers (User_ID 1001680 in this case) with the dataset that includes total purchase amounts can provide a comprehensive view of their shopping behavior and expenditure patterns.Perform this joining process using the following code:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 top_shoppers =  top_shoppers %>%
@@ -883,9 +897,7 @@ customers_Occupation =  dataset %>%
 head(customers_Occupation)
 ```
 
-Now that dataset necessary, group together the total Purchase_Amount for each Occupation identifier.
-
-Then convert Occupation to a charater data type.
+Now that dataset necessary, group together the total Purchase_Amount for each Occupation identifier. Then convert Occupation to a charater data type.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
 totalPurchases_Occupation = customers_Occupation %>%
@@ -921,7 +933,7 @@ Looks like customers labeled as Occupation 4 spent the most at store on Black Fr
 
 \newpage
 
-# Chapter 3
+# Chapter 4
 
 ## Modeling Results and Model Performance
 
@@ -940,6 +952,17 @@ As an embark on implementing the Apriori algorithm using the arules package, ens
 If haven't imported the libraries yet, can use the following code:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE}
+if (!require(arules)) {
+  install.packages("arules", repos = "http://cran.us.r-project.org")
+}
+if (!require(arulesViz)) {
+  install.packages("arulesViz", repos = "http://cran.us.r-project.org")
+}
+if (!require(tidyverse)) {
+  install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+}
+
+
 library(arules)
 library(arulesViz)
 library(tidyverse)
@@ -1132,7 +1155,7 @@ The size of the bubbles represents the support value of the rule and the fill/co
 
 \newpage
 
-# Chapter 4
+# Chapter 5
 
 ## Conclusion
 

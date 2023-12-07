@@ -1,13 +1,25 @@
-################################################################################## 
-#Title: Exploring a Hypothetical Store's Shopper Data Dataset in Anticipation of #
-#        the Black Friday Holiday Season                                         #
-#Author: Delpagodage Ama Nayanahari Jayaweera                                    #
-#Subtitle : Data Science: Capstone Project for Harvardx Professional Data Science#
-#           Certificate (Choose your own project: PH125.9x)                      #
-#Date: 2023-10-27                                                                #
-##################################################################################
+###################################################################################### 
+#Title    : Exploring a Hypothetical Store's Shopper Data Dataset in Anticipation of #
+#           the Black Friday Holiday Season                                          #
+#Author   : Delpagodage Ama Nayanahari Jayaweera                                     #
+#Subtitle : Data Science: Capstone Project for Harvardx Professional Data Science    #
+#           Certificate (Choose your own project: PH125.9x)                          #
+#Date     : 2023-10-27                                                               #
+######################################################################################
 
+######################################################################################
+#Method and Analysis in Exploratory Data Analysis (EDA)                              #
+###################################################################################### 
 # 1. Import the libraries we will be utilizing in this kernel
+if (!require(tidyverse)) {install.packages("tidyverse", repos = "http://cran.us.r-project.org")}
+if (!require(scales)) {install.packages("scales", repos = "http://cran.us.r-project.org")}
+if (!require(arules)) {install.packages("arules", repos = "http://cran.us.r-project.org")}
+if (!require(gridExtra)) {install.packages("gridExtra", repos = "http://cran.us.r-project.org")}
+if (!require(purrr)) {install.packages("purrr", repos = "http://cran.us.r-project.org")}
+if (!require(readr)) {install.packages("readr", repos = "http://cran.us.r-project.org")}
+if (!require(tidyr)) {install.packages("tidyr", repos = "http://cran.us.r-project.org")}
+if (!require(dplyr)) {install.packages("dplyr", repos = "http://cran.us.r-project.org")}
+
 library(tidyverse)
 library(scales)
 library(arules)
@@ -83,6 +95,9 @@ top_5
 #10. Examine the best selling product
 best_seller = dataset[dataset$Product_ID == 'P00265242', ]
 
+######################################################################################
+#Results and Discussion                                                              #
+###################################################################################### 
 head(best_seller)
 
 #11. Analyze best seller to see if any relationship to Gender
@@ -409,16 +424,25 @@ occupation = ggplot(data = totalPurchases_Occupation) +
   theme(legend.position="none")
 print(occupation)
 
+######################################################################################
+#Modeling Results and Model Performance with Apriori (Association Rule Learning)     #                                                          #
+###################################################################################### 
+
 #48 Modeling Results and Model Performance
+if (!require(arules)) {install.packages("arules", repos = "http://cran.us.r-project.org")}
+if (!require(arulesViz)) {install.packages("arulesViz", repos = "http://cran.us.r-project.org")}
+if (!require(tidyverse)) {install.packages("tidyverse", repos = "http://cran.us.r-project.org")}
+
 library(arules)
 library(arulesViz)
 library(tidyverse)
 
 
+######################################################################################
+# Data Preprocessing                                                                 #
+# Getting the dataset into the correct format                                        #
+######################################################################################
 #49 Apriori (Association Rule Learning)
-
-# Data Preprocessing
-# Getting the dataset into the correct format
 customers_products = dataset %>%
   select(User_ID, Product_ID) %>%   # Selecting the columns we will need
   group_by(User_ID) %>%             # Grouping by "User_ID"          
@@ -429,9 +453,7 @@ customers_products = dataset %>%
 
 # Now we can remove the Id row we created earlier for spread() to work correctly.
 customers_products = customers_products[-1,]
-
 write.csv(customers_products, file = 'customers_products.csv')
-
 customersProducts = read.transactions('customers_products.csv', sep = ',', rm.duplicates = TRUE) # remove duplicates with rm.duplicates
 
 summary(customersProducts)
@@ -444,9 +466,7 @@ itemFrequencyPlot(customersProducts, topN = 25)    # topN is limiting to the top
 rules = apriori(data = customersProducts,
                 parameter = list(support = 0.008, confidence = 0.80, maxtime = 0)) # maxtime = 0 will allow our algorithim to run until completion with no time limit
 
-
 inspect(sort(rules, by = 'lift'))
-
 plot(rules, method = 'graph')
 
 
@@ -457,5 +477,4 @@ rules = apriori(data = customersProducts,
 inspect(head(sort(rules, by = 'lift'))) # limiting to the top 6 rules
 
 plot(rules, method = 'graph', max = 25)
-
 plot(rules, method = 'grouped', max = 25)
