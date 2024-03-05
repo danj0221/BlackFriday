@@ -109,12 +109,14 @@ print(genderDist_bs)
 
 #12. Distribution between genders to our overall dataset gender
 genderDist_bs_prop = ggplot(data = best_seller) + 
-  geom_bar(fill = 'lightblue', mapping = aes(x = Gender, y = ..prop.., group = 1, fill = Gender)) +
+  geom_bar(fill = 'lightblue', mapping = aes(x = Gender,
+                                             y = ..prop.., group = 1, fill = Gender)) +
   labs(title = 'Gender of Customers (Best Seller - Proportion)') +
   theme(plot.title = element_text(size=9.5))
 
 genderDist_prop = ggplot(data = dataset_gender) + 
-  geom_bar(fill = "lightblue4", mapping = aes(x = Gender, y = ..prop.., group = 1)) +
+  geom_bar(fill = "lightblue4", mapping = aes(x = Gender, 
+                                              y = ..prop.., group = 1)) +
   labs(title = 'Gender of Customers (Total Proportion)') +
   theme(plot.title = element_text(size=9.5)) 
 
