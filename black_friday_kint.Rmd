@@ -2,7 +2,7 @@
 title: "Exploring a Hypothetical Store's Shopper Data Dataset in Anticipation of the Black Friday Holiday Season"
 author: "Delpagodage Ama Nayanahari Jayaweera"
 subtitle : "Data Science: Capstone Project for Harvardx Professional Data Science Certificate (Choose your own project: PH125.9x)"
-date: '27 October 2023'
+date: '05 March 2024'
 output: 
   pdf_document: 
     toc: yes
@@ -49,7 +49,7 @@ The modern incarnation of Black Friday has evolved into a grand spectacle charac
 Beyond its immediate scope, the term "Black Friday" has also catalyzed the emergence of additional retail-themed observances, including "Cyber Monday," "Small Business Saturday," and "Giving Tuesday." Herein lie several noteworthy statistical highlights extracted from the events of "Black Friday" in the year 2018:
 
 1.  Foot traffic of patrons within physical stores experienced a marginal decline of 1.7% as compared to the preceding year of 2017.
-2.  Online consumer expenditures witnessed a robust surge, tallying an impressive /$6.22 billion, reflecting a substantial increase of 23.6% from the corresponding figures of 2017.
+2.  Online consumer expenditures witnessed a robust surge, tallying an impressive $6.22 billion, reflecting a substantial increase of 23.6% from the corresponding figures of 2017.
 
 ## Executive Summary
 
